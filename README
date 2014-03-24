@@ -1,0 +1,39 @@
+/***********************************************************
+* Program: officeHours
+* Introduction: 
+* 		A C program that uses pThreads and semaphores to \
+* synchronize a TA and students during office hours.
+* Author: liang
+* Date: 2014/3/21
+* Copyrights applied to GPL and open source limitations.
+***********************************************************/
+
+/***********************************************************
+[Detailed Instructions]
+-  Only one person is speaking at a time.
+-  The TA answers each question from a student.
+-  No student asks another question before the TA is done answering the previous 
+question.
+-  A student can only ask one question when they get a chance to ask a question.
+-  The TA and the students must be synchronized so that when a student asks their 
+question the next person to speak is the TA with the answer.
+-  A limited number of students are allowed in the TA's office.
+-  Students will wait if the office is full.
+-  A  student  does  not  leave  the  TA's  office  until  all their questions  have  been 
+answered.
+-  There is only one TA but there may be multiple students. 
+-  You do not know the order of students in asking questions.
+***********************************************************/
+
+/***********************************************************
+Instructions:
+1. Compile
+> gcc -o officeHours officeHours.c -lpthread -lrt
+2. Execute
+> officeHours <number1> <number2> <number3>
+Where - number1, number2, number3 as:
+number1: number of students that will come during office hours
+number2: number of students allowed into the TA's office
+number3: number of questions each student may ask
+***********************************************************/
+
