@@ -24,6 +24,12 @@ answered.
 ***********************************************************/
 #include "officeHours.h"
 
+static sem_t room_sem; //start with room size, student (enter - wait /leave - post)
+static int tbc_num; // condition variable - num of question to be answered(0 empty/1 exists question)
+static int total_num; //total number of questions for the TA
+static pthread_cond_t question_cond; //cond var - question 
+static pthread_mutex_t question_mutex; // cond mutex - question
+
 /* Student - ask question */
 void studentAsk(int student_id, int idx)
 {
@@ -49,11 +55,11 @@ void *studentThread(void *param)
 	sem_wait(&room_sem);
 	printf("I am student %d and I'm entering the office\n", si->student_id);
 	//block - run - block ...
-	for(idx=0; idx<si->question_num; idx++)
+	for (idx = 0; idx < si->question_num; idx++)
 	{
 		pthread_mutex_lock(&question_mutex);
 		// while loop, cond check(satisfied) - wait - cond check(satisfied - wait / else ask)
-		while(tbc_num>0) 
+		while (tbc_num > 0) 
 		{
 			pthread_cond_wait(&question_cond, &question_mutex);
 		}
@@ -71,13 +77,13 @@ void *officeThread(void *param)
     while(1) 
     {
         pthread_mutex_lock(&question_mutex);
-		if(tbc_num>0)
+		if (tbc_num > 0)
 		{
 			total_num--;
 			officeAnswer();  
 		}
         pthread_mutex_unlock(&question_mutex);
-		if(total_num<=0)
+		if (total_num <= 0)
 		{
 			//break;
 			//sleep(5);
@@ -85,7 +91,7 @@ void *officeThread(void *param)
 			printf("I am TA, no students in the office, I'm available now.\n");
 			break;
 		}
-		else if(tbc_num<=0)
+		else if (tbc_num <= 0)
 		{
 			pthread_cond_signal(&question_cond);
 		}
@@ -99,11 +105,11 @@ int main(int argc, char *argv[])
 	int student_num, room_size, question_num;
 	int i, res;
 	pthread_t ta_pt;
-	pthread_t *sp_ptr=NULL;
-	student_info *si_ptr=NULL;
-	tbc_num=0;
+	pthread_t *sp_ptr = NULL;
+	student_info *si_ptr = NULL;
+	tbc_num = 0;
 	
-	if(argc!=4)
+	if (argc != 4)
 	{
 		printf("Usage:\n");
 		printf("\tofficeHours <number1> <number2> <number3>\n");
@@ -118,7 +124,7 @@ int main(int argc, char *argv[])
 	room_size = atoi(argv[2]);
 	question_num = atoi(argv[3]);
 	// check if input arguments valid or not
-	if(student_num<=0||room_size<=0||question_num<=0)
+	if (student_num <= 0 || room_size <= 0 || question_num <= 0)
 	{
 		printf("Invalid input numbers(should be greater than zero): \n");
 		printf("number of students that will come:%d\n", student_num);
@@ -129,14 +135,14 @@ int main(int argc, char *argv[])
 	}
 
 	total_num = student_num*question_num;
-	sp_ptr =(pthread_t *)malloc(student_num*sizeof(pthread_t));
-	if(!sp_ptr)
+	sp_ptr = (pthread_t *)malloc(student_num*sizeof(pthread_t));
+	if (sp_ptr == NULL)
 	{
 		handle_error("Allocate memory for students' thread index failed.");
 	}
 
-	si_ptr=(student_info *)malloc(student_num*sizeof(student_info));
-	if(!si_ptr)
+	si_ptr = (student_info *)malloc(student_num*sizeof(student_info));
+	if (si_ptr == NULL)
 	{
 		free(sp_ptr);
 		handle_error("Allocate memory for student info failed.");
@@ -145,42 +151,42 @@ int main(int argc, char *argv[])
 	memset(si_ptr, 0, student_num*sizeof(student_info));
 	
 	// initialize semaphores and condition 
-	res=sem_init(&room_sem,0,(unsigned int)room_size); // room_sem is initialized as room size 
-	if(res==-1)
+	res = sem_init(&room_sem,0,(unsigned int)room_size); // room_sem is initialized as room size 
+	if (res == -1)
 		handle_error("sem_init error");
-	res=pthread_mutex_init(&question_mutex, NULL); // initialize question mutex
-	if(res!=0)
+	res = pthread_mutex_init(&question_mutex, NULL); // initialize question mutex
+	if (res != 0)
 		handle_error("pthread_mutex_init error");
-	res=pthread_cond_init(&question_cond, NULL); // initialize question cond
-	if(res!=0)
+	res = pthread_cond_init(&question_cond, NULL); // initialize question cond
+	if (res != 0)
 		handle_error("pthread_cond_init error");
    
 	//2. create threads
 	// threads of students
-	for(i=0; i<student_num; i++)
+	for (i=0; i<student_num; i++)
 	{	
 		pthread_t pid;
 		si_ptr[i].student_id = i+1;
 		si_ptr[i].question_num = question_num;
-		res=pthread_create(&pid, NULL, studentThread, &si_ptr[i]);
-		if(res!=0)
+		res = pthread_create(&pid, NULL, studentThread, &si_ptr[i]);
+		if (res != 0)
 			handle_error("pthread_create error");
 		sp_ptr[i] = pid;
 	}
 	// threads of TA
 	res=pthread_create(&ta_pt, NULL, officeThread, NULL);
-	if(res!=0)
+	if (res != 0)
 		handle_error("pthread_create error");
 	
 	//3. join threads
-	for(i=0; i<student_num; i++)
+	for (i=0; i<student_num; i++)
 	{	
-		res=pthread_join(sp_ptr[i], NULL);
-		if(res!=0)
+		res = pthread_join(sp_ptr[i], NULL);
+		if(res != 0)
 			handle_error("pthread_join error");
 	}
-	res=pthread_join(ta_pt, NULL);
-	if(res!=0)
+	res = pthread_join(ta_pt, NULL);
+	if (res != 0)
 		handle_error("pthread_join error");
 	
 	//4. cond, mutex, semaphore destory

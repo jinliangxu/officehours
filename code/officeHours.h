@@ -22,6 +22,8 @@ answered.
 -  There is only one TA but there may be multiple students. 
 -  You do not know the order of students in asking questions.
 ***********************************************************/
+#ifndef __OFFICEHOURS_H__
+#define __OFFICEHOURS_H__
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,21 +34,16 @@ answered.
 
 #define handle_error(msg) \
    do { perror(msg); exit(EXIT_FAILURE); } while (0)
-   
+
 typedef struct _student_info
 {
 	int student_id;
 	int question_num;
 }student_info;
 
-sem_t room_sem; //start with room size, student (enter - wait /leave - post)
-int tbc_num; // condition variable - num of question to be answered(0 empty/1 exists question)
-int total_num; //total number of questions for the TA
-pthread_cond_t question_cond; //cond var - question 
-pthread_mutex_t question_mutex; // cond mutex - question
-
 void studentAsk(int student_id, int idx);
 void officeAnswer();
 void *studentThread(void *param);
 void *officeThread(void *param);
 
+#endif
